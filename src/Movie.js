@@ -1,24 +1,8 @@
 import React from "react";
 import { useState } from "react";
-import ReactDOM from "react-dom";
-import "./App.css";
-const root = ReactDOM.createRoot(document.getElementById("root"));
-let posterSrc = "";
-let movieObj = [];
-let mainMovie = { type: "Fiat", model: "500", color: "white" };
-function App() {
-  return (
-    <div className="App">
-      <Movie />
-    </div>
-  );
-}
+import { posterSrc, movieObj } from "./App";
 
-function Movie() {
-  const [poster, setPoster] = useState(posterSrc);
-  const [name, setName] = useState("");
-  const [plot, setPlot] = useState("");
-  Testprops2(setPoster);
+export function Movie() {
   function MovieButton() {
     const [val, setval] = useState(0);
 
@@ -26,10 +10,40 @@ function Movie() {
       console.log("clicked movie button");
       let element = document.getElementById("term");
       console.log(element.value);
-      searchMovie(element.value, ShowPoster);
+      searchMovie(element.value);
     }
 
     return <button onClick={handleClick}>Search</button>;
+  }
+
+  const [poster, setPoster] = useState(posterSrc);
+  const [name, setName] = useState("");
+  const [plot, setPlot] = useState("");
+
+  function searchMovie(title) {
+    let sParameter = encodeURIComponent(title.trim());
+    const options = {
+      method: "GET",
+      headers: {
+        accept: "application/json",
+        Authorization:
+          "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5YWFiMTViNWE0ZTFjZTYxMTY5ZGE1ZTc3Zjk3MjQ4NiIsInN1YiI6IjY0ZmZiMDMxZGI0ZWQ2MTAzMmE3MDViYyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.CF_vamypSa0m8oF06Hh1JSO7ajPkYf96sWHND_j-SFc",
+      },
+    };
+
+    fetch(
+      "https://api.themoviedb.org/3/search/movie?query=" +
+        sParameter +
+        "&include_adult=false&language=en-US&page=1",
+      options
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        ShowPoster(data.results[0]);
+        movieObj = data.results;
+        console.log(movieObj);
+      })
+      .catch((err) => console.error(err));
   }
 
   function ShowPoster(object) {
@@ -44,16 +58,15 @@ function Movie() {
   function MovieList(obj) {
     console.log(obj);
     const [numbers, setNumbers] = useState(obj.lst);
-    function handleClick(obj) {
-      console.log("clicked movie " + obj.original_title);
-      ShowPoster(obj);
+    function handleClick(id) {
+      console.log("clicked movie " + id);
     }
 
     const listItems = numbers.map((numbers) => (
       <li key={numbers.id}>
         <div className="movieContainer">
           <p>{numbers.original_title}</p>
-          <button onClick={(e) => handleClick(numbers)}>
+          <button onClick={(e) => handleClick(numbers.id)}>
             <img
               src={"http://image.tmdb.org/t/p/w500/" + numbers.poster_path}
               width="180"
@@ -114,44 +127,4 @@ function Movie() {
       </div>
     );
   }
-}
-
-export default App;
-
-function Testprops(props) {
-  props.setPoster("https://m.media-amazon.com/images/I/81RZipc6yOL.jpg");
-  console.log("prop tests");
-  return <p>test</p>;
-}
-
-function Testprops2(props) {
-  //props("https://m.media-amazon.com/images/I/81RZipc6yOL.jpg");
-  console.log("prop tests2");
-  console.log(props);
-}
-
-function searchMovie(title, showPoster) {
-  let sParameter = encodeURIComponent(title.trim());
-  const options = {
-    method: "GET",
-    headers: {
-      accept: "application/json",
-      Authorization:
-        "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5YWFiMTViNWE0ZTFjZTYxMTY5ZGE1ZTc3Zjk3MjQ4NiIsInN1YiI6IjY0ZmZiMDMxZGI0ZWQ2MTAzMmE3MDViYyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.CF_vamypSa0m8oF06Hh1JSO7ajPkYf96sWHND_j-SFc",
-    },
-  };
-
-  fetch(
-    "https://api.themoviedb.org/3/search/movie?query=" +
-      sParameter +
-      "&include_adult=false&language=en-US&page=1",
-    options
-  )
-    .then((response) => response.json())
-    .then((data) => {
-      showPoster(data.results[0]);
-      movieObj = data.results;
-      console.log(movieObj);
-    })
-    .catch((err) => console.error(err));
 }
