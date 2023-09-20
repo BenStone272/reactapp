@@ -13,25 +13,31 @@ export const Context = React.createContext();
 let posterSrc = "";
 let movieObj = [];
 let movieWatchList = [];
-let selectedMovie = { type: "test" };
-export { selectedMovie as selectedMovie };
+//let selectedMovie = { type: "test" };
+//export { selectedMovie as selectedMovie };
 
 function App() {
-  //const [selectedMovie, SetSelectedMovie] = useState("");
+  const [selectedMovie, SetSelectedMovie] = useState("");
   return (
     <div className="App">
       <Navbar />
       <Routes>
-        <Route path="/" element={<Movie />} />
+        <Route
+          path="/"
+          element={<Movie SetSelectedMovie={SetSelectedMovie} />}
+        />
         <Route path="/demo" element={<Demo />} />
-        <Route path="/watchlist" element={<Demo2 />} />
+        <Route
+          path="/watchlist"
+          element={<Demo2 SetSelectedMovie={SetSelectedMovie} />}
+        />
         <Route path="/focus" element={<FocusMovie obj={selectedMovie} />} />
       </Routes>
     </div>
   );
 }
 
-function Movie() {
+function Movie(props) {
   const [poster, setPoster] = useState(posterSrc);
   const [name, setName] = useState("");
   const [plot, setPlot] = useState("");
@@ -62,7 +68,7 @@ function Movie() {
   return (
     <div className="container">
       <div className="search">
-        <h1>Movie Poster Search</h1>
+        <h1>Movie Search</h1>
         <div id="fetch">
           <input type="text" placeholder="enter movie title here" id="term" />
           <MovieButton />
@@ -75,7 +81,11 @@ function Movie() {
         </div>
         <div id="plot" />
       </div>
-      <MovieList lst={movieObj} ShowPoster={ShowPoster} />
+      <MovieList
+        lst={movieObj}
+        ShowPoster={ShowPoster}
+        SetSelectedMovie={props.SetSelectedMovie}
+      />
     </div>
   );
 }
@@ -112,13 +122,14 @@ function MovieList(obj) {
   const navigate = useNavigate();
   const tst = obj.lst;
   const [numbers, setNumbers] = useState(tst);
-  console.log(numbers);
+  console.log(obj);
   console.log("ddddddddddddddddddddddddddddddd");
   function handleClick(obj2) {
     console.log("clicked movie " + obj2.original_title);
-    obj.ShowPoster(obj2);
-    selectedMovie = obj2;
-    console.log(selectedMovie);
+    //obj.ShowPoster(obj2);
+    //selectedMovie = obj2;
+    //console.log(selectedMovie);
+    obj.SetSelectedMovie(obj2);
     navigate("/focus");
   }
 
@@ -143,8 +154,10 @@ function Demo() {
   return <h1>This is the demo page</h1>;
 }
 
-function Demo2() {
-  return <Watchlist lst={movieWatchList} />;
+function Demo2(props) {
+  return (
+    <Watchlist lst={movieWatchList} SetSelectedMovie={props.SetSelectedMovie} />
+  );
 }
 
 function Watchlist(obj) {
@@ -157,7 +170,7 @@ function Watchlist(obj) {
 
   return (
     <>
-      <MovieList lst={movieWatchList} ShowPoster={obj.ShowPoster} />
+      <MovieList lst={movieWatchList} SetSelectedMovie={obj.SetSelectedMovie} />
     </>
   );
 }
