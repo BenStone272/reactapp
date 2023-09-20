@@ -1,18 +1,23 @@
 import React from "react";
 import { useState } from "react";
+import { useEffect } from "react";
 import ReactDOM from "react-dom";
 import "./App.css";
 import { Route, Routes } from "react-router-dom";
 import Navbar from "./NavBar";
+import FocusMovie from "./FocusMovie";
 import { useNavigate } from "react-router-dom";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
+export const Context = React.createContext();
 let posterSrc = "";
 let movieObj = [];
 let movieWatchList = [];
-let selectedMovie;
+let selectedMovie = { type: "test" };
+export { selectedMovie as selectedMovie };
 
 function App() {
+  //const [selectedMovie, SetSelectedMovie] = useState("");
   return (
     <div className="App">
       <Navbar />
@@ -144,14 +149,11 @@ function Demo2() {
 
 function Watchlist(obj) {
   const [lst, setLst] = useState([1]);
-  if (lst[0] == 1) {
-    setLst([2]);
+  //this only runs once when Watchlist is made not on rerenders
+  useEffect(() => {
+    console.log("this should only log once");
     getLst(setLst);
-  }
-  function handleClick() {
-    //setTimeout(setLst([3]), 3000);
-    setLst([2]);
-  }
+  }, []);
 
   return (
     <>
@@ -186,10 +188,4 @@ async function getLst(setLst) {
   setLst([2]);
 
   //setLst(["it should have chnaged by now"]);
-}
-
-function FocusMovie(props) {
-  console.log(props);
-  console.log(selectedMovie);
-  return <h1>{selectedMovie.original_title}</h1>;
 }
