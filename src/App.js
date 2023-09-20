@@ -11,20 +11,28 @@ import { useNavigate } from "react-router-dom";
 const root = ReactDOM.createRoot(document.getElementById("root"));
 export const Context = React.createContext();
 let posterSrc = "";
-let movieObj = [];
+
 let movieWatchList = [];
-//let selectedMovie = { type: "test" };
-//export { selectedMovie as selectedMovie };
+//this is used for holdinhg list of all users selected movies
+export let array = [11];
 
 function App() {
   const [selectedMovie, SetSelectedMovie] = useState("");
+  const [movieObj, SetmovieObj] = useState([]);
+
   return (
     <div className="App">
       <Navbar />
       <Routes>
         <Route
           path="/"
-          element={<Movie SetSelectedMovie={SetSelectedMovie} />}
+          element={
+            <Movie
+              SetSelectedMovie={SetSelectedMovie}
+              movieObj={movieObj}
+              SetmovieObj={SetmovieObj}
+            />
+          }
         />
         <Route path="/demo" element={<Demo />} />
         <Route
@@ -42,14 +50,13 @@ function Movie(props) {
   const [name, setName] = useState("");
   const [plot, setPlot] = useState("");
   const [release_date, setRelease_date] = useState("");
-  function MovieButton() {
-    const [val, setval] = useState(0);
 
+  function MovieButton() {
     function handleClick() {
       console.log("clicked movie button");
       let element = document.getElementById("term");
       console.log(element.value);
-      searchMovie(element.value, ShowPoster);
+      searchMovie(element.value, ShowPoster, props.SetmovieObj);
     }
 
     return <button onClick={handleClick}>Search</button>;
@@ -82,7 +89,7 @@ function Movie(props) {
         <div id="plot" />
       </div>
       <MovieList
-        lst={movieObj}
+        lst={props.movieObj}
         ShowPoster={ShowPoster}
         SetSelectedMovie={props.SetSelectedMovie}
       />
@@ -92,7 +99,7 @@ function Movie(props) {
 
 export default App;
 
-function searchMovie(title, showPoster) {
+function searchMovie(title, showPoster, SetmovieObj) {
   let sParameter = encodeURIComponent(title.trim());
   const options = {
     method: "GET",
@@ -111,9 +118,9 @@ function searchMovie(title, showPoster) {
   )
     .then((response) => response.json())
     .then((data) => {
-      showPoster(data.results[0]);
-      movieObj = data.results;
-      console.log(movieObj);
+      //showPoster(data.results[0]);
+      //movieObj = data.results;
+      SetmovieObj(data.results);
     })
     .catch((err) => console.error(err));
 }
@@ -122,17 +129,55 @@ function MovieList(obj) {
   const navigate = useNavigate();
   const tst = obj.lst;
   const [numbers, setNumbers] = useState(tst);
-  console.log(obj);
-  console.log("ddddddddddddddddddddddddddddddd");
   function handleClick(obj2) {
     console.log("clicked movie " + obj2.original_title);
-    //obj.ShowPoster(obj2);
-    //selectedMovie = obj2;
-    //console.log(selectedMovie);
     obj.SetSelectedMovie(obj2);
     navigate("/focus");
   }
 
+  function Checkbox(props) {
+    const [check, setCheck] = useState(false);
+    useEffect(() => {
+      if (array.includes(props.movie.id)) {
+        setCheck(true);
+      }
+    }, []);
+    const handleChange = (event) => {
+      let movieId = Number(event.target.id);
+      console.log(event.target.checked);
+      if (event.target.checked) {
+        if (!array.includes(movieId)) {
+          array.push(movieId);
+          console.log("✅ Added to list");
+          console.log(array);
+          setCheck(true);
+        }
+      } else {
+        console.log("⛔️ Removed from list");
+        const index = array.indexOf(movieId);
+        if (index > -1) {
+          // only splice array when item is found
+          array.splice(index, 1); // 2nd parameter means remove one item only
+          console.log(array);
+          setCheck(false);
+        }
+      }
+    };
+
+    return (
+      <label>
+        <input
+          type="checkbox"
+          value={false}
+          onChange={handleChange}
+          id={props.movie.id}
+          name="subscribe"
+          checked={check}
+        />
+        Add to Watchlist
+      </label>
+    );
+  }
   const listItems = obj.lst.map((numbers) => (
     <li key={numbers.id}>
       <div className="movieContainer">
@@ -143,6 +188,9 @@ function MovieList(obj) {
             width="180"
             height="265"></img>
         </button>
+        <Checkbox movie={numbers} />
+
+        <br></br>
       </div>
     </li>
   ));
@@ -160,7 +208,7 @@ function Demo2(props) {
   );
 }
 
-function Watchlist(obj) {
+function Watchlist(props) {
   const [lst, setLst] = useState([1]);
   //this only runs once when Watchlist is made not on rerenders
   useEffect(() => {
@@ -170,13 +218,16 @@ function Watchlist(obj) {
 
   return (
     <>
-      <MovieList lst={movieWatchList} SetSelectedMovie={obj.SetSelectedMovie} />
+      <MovieList
+        lst={movieWatchList}
+        SetSelectedMovie={props.SetSelectedMovie}
+      />
     </>
   );
 }
 
 async function getLst(setLst) {
-  const lst = [78, 11791, 11801, 11826, 348350]; // would call api to get users watchlist here
+  const lst = array; //[78, 11791, 11801, 11826, 348350]; // would call api to get users watchlist here
   let movieLst = [];
   for (let i = 0; i < lst.length; i++) {
     const response = await fetch(

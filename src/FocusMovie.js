@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
-//import { selectedMovie } from "./App";
 
 export default function FocusMovie(props) {
   const [focus, setFocus] = useState(props.obj);
@@ -34,9 +33,11 @@ export default function FocusMovie(props) {
 
   return (
     <div>
-      <h1>{focus.original_title}</h1>;
+      <h1>{focus.original_title}</h1>
+      <h3>{"Released " + focus.release_date.slice(0, 4)}</h3>
       <img src={"http://image.tmdb.org/t/p/w500/" + focus.poster_path}></img>
-      <p>{focus.tagline}</p>
+      <h3>{focus.tagline}</h3>
+      <p>{focus.overview}</p>
     </div>
   );
 }
