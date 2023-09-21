@@ -7,6 +7,7 @@ import { Route, Routes } from "react-router-dom";
 import Navbar from "./NavBar";
 import FocusMovie from "./FocusMovie";
 import { useNavigate } from "react-router-dom";
+import { Similar } from "./Similar";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 export const Context = React.createContext();
@@ -39,7 +40,26 @@ function App() {
           path="/watchlist"
           element={<Demo2 SetSelectedMovie={SetSelectedMovie} />}
         />
-        <Route path="/focus" element={<FocusMovie obj={selectedMovie} />} />
+        <Route
+          path="/similar"
+          element={
+            <>
+              <Similar
+                SetSelectedMovie={SetSelectedMovie}
+                selectedMovie={selectedMovie}
+              />
+            </>
+          }
+        />
+        <Route
+          path="/focus"
+          element={
+            <FocusMovie
+              obj={selectedMovie}
+              SetSelectedMovie={SetSelectedMovie}
+            />
+          }
+        />
       </Routes>
     </div>
   );
@@ -125,9 +145,10 @@ function searchMovie(title, showPoster, SetmovieObj) {
     .catch((err) => console.error(err));
 }
 
-function MovieList(obj) {
+export function MovieList(obj) {
   const navigate = useNavigate();
   const tst = obj.lst;
+  console.log(tst);
   const [numbers, setNumbers] = useState(tst);
   function handleClick(obj2) {
     console.log("clicked movie " + obj2.original_title);
@@ -199,7 +220,7 @@ function MovieList(obj) {
 }
 
 function Demo() {
-  return <h1>This is the demo page</h1>;
+  return <h1>This will eventaully be the page to view freinds lists</h1>;
 }
 
 function Demo2(props) {
@@ -207,7 +228,6 @@ function Demo2(props) {
     <Watchlist lst={movieWatchList} SetSelectedMovie={props.SetSelectedMovie} />
   );
 }
-
 function Watchlist(props) {
   const [lst, setLst] = useState([1]);
   //this only runs once when Watchlist is made not on rerenders
