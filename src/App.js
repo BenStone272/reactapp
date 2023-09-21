@@ -8,6 +8,9 @@ import Navbar from "./NavBar";
 import FocusMovie from "./FocusMovie";
 import { useNavigate } from "react-router-dom";
 import { Similar } from "./Similar";
+import { Authenticator } from "@aws-amplify/ui-react";
+import "@aws-amplify/ui-react/styles.css";
+import { Auth } from "aws-amplify";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 export const Context = React.createContext();
@@ -17,9 +20,20 @@ let movieWatchList = [];
 //this is used for holdinhg list of all users selected movies
 export let array = [11];
 
+const getIdToken = async () => {
+  try {
+    const session = await Auth.currentSession();
+    const jwtToken = session.getIdToken().getJwtToken();
+    console.log("JWT Token:", jwtToken);
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
+
 function App() {
   const [selectedMovie, SetSelectedMovie] = useState("");
   const [movieObj, SetmovieObj] = useState([]);
+  getIdToken();
 
   return (
     <div className="App">
@@ -35,7 +49,7 @@ function App() {
             />
           }
         />
-        <Route path="/demo" element={<Demo />} />
+        <Route path="/login" element={<Login />} />
         <Route
           path="/watchlist"
           element={<Demo2 SetSelectedMovie={SetSelectedMovie} />}
@@ -219,8 +233,18 @@ export function MovieList(obj) {
   return <ul>{listItems}</ul>;
 }
 
-function Demo() {
-  return <h1>This will eventaully be the page to view freinds lists</h1>;
+function Login() {
+  getIdToken();
+  return (
+    <Authenticator>
+      {({ signOut, user }) => (
+        <div>
+          <p>Welcome {user.username}</p>
+          <button onClick={signOut}>Sign out</button>
+        </div>
+      )}
+    </Authenticator>
+  );
 }
 
 function Demo2(props) {

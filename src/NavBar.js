@@ -7,7 +7,7 @@ export default function Navbar() {
         Home
       </Link>
       <ul>
-        <CustomLink to="/demo">Demo</CustomLink>
+        <CustomLink to="/login">Login</CustomLink>
         <CustomLink to="/watchlist">Watchlist</CustomLink>
       </ul>
     </nav>
