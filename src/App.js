@@ -1,5 +1,7 @@
 import React from "react";
-import { useState } from "react";
+import { Authenticator } from "@aws-amplify/ui-react";
+import { Auth } from "aws-amplify";
+import { useState, createContext, useContext } from "react";
 import { useEffect } from "react";
 import ReactDOM from "react-dom";
 import "./App.css";
@@ -8,74 +10,66 @@ import Navbar from "./NavBar";
 import FocusMovie from "./FocusMovie";
 import { useNavigate } from "react-router-dom";
 import { Similar } from "./Similar";
-import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
-import { Auth } from "aws-amplify";
+import { Login } from "./Login";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-export const Context = React.createContext();
+export const UserContext = createContext();
 let posterSrc = "";
 
 let movieWatchList = [];
 //this is used for holdinhg list of all users selected movies
 export let array = [11];
 
-const getIdToken = async () => {
-  try {
-    const session = await Auth.currentSession();
-    const jwtToken = session.getIdToken().getJwtToken();
-    console.log("JWT Token:", jwtToken);
-  } catch (error) {
-    console.error("Error:", error);
-  }
-};
-
 function App() {
   const [selectedMovie, SetSelectedMovie] = useState("");
   const [movieObj, SetmovieObj] = useState([]);
-  getIdToken();
-
+  const [token, setToken] = useState("1");
+  const [array, setArray] = useState([]);
+  console.log(token);
   return (
-    <div className="App">
-      <Navbar />
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <Movie
-              SetSelectedMovie={SetSelectedMovie}
-              movieObj={movieObj}
-              SetmovieObj={SetmovieObj}
-            />
-          }
-        />
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="/watchlist"
-          element={<Demo2 SetSelectedMovie={SetSelectedMovie} />}
-        />
-        <Route
-          path="/similar"
-          element={
-            <>
-              <Similar
+    <UserContext.Provider value={{ setToken, token, array, setArray }}>
+      <div className="App">
+        <Navbar />
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <Movie
                 SetSelectedMovie={SetSelectedMovie}
-                selectedMovie={selectedMovie}
+                movieObj={movieObj}
+                SetmovieObj={SetmovieObj}
               />
-            </>
-          }
-        />
-        <Route
-          path="/focus"
-          element={
-            <FocusMovie
-              obj={selectedMovie}
-              SetSelectedMovie={SetSelectedMovie}
-            />
-          }
-        />
-      </Routes>
-    </div>
+            }
+          />
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/watchlist"
+            element={<Demo2 SetSelectedMovie={SetSelectedMovie} />}
+          />
+          <Route
+            path="/similar"
+            element={
+              <>
+                <Similar
+                  SetSelectedMovie={SetSelectedMovie}
+                  selectedMovie={selectedMovie}
+                />
+              </>
+            }
+          />
+          <Route
+            path="/focus"
+            element={
+              <FocusMovie
+                obj={selectedMovie}
+                SetSelectedMovie={SetSelectedMovie}
+              />
+            }
+          />
+        </Routes>
+      </div>
+    </UserContext.Provider>
   );
 }
 
@@ -231,20 +225,6 @@ export function MovieList(obj) {
   ));
   console.log(listItems);
   return <ul>{listItems}</ul>;
-}
-
-function Login() {
-  getIdToken();
-  return (
-    <Authenticator>
-      {({ signOut, user }) => (
-        <div>
-          <p>Welcome {user.username}</p>
-          <button onClick={signOut}>Sign out</button>
-        </div>
-      )}
-    </Authenticator>
-  );
 }
 
 function Demo2(props) {
