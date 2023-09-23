@@ -5,7 +5,7 @@ import { useState, createContext, useContext, useEffect } from "react";
 import { UserContext } from "./App.js";
 
 export function Login() {
-  const { setToken, token } = useContext(UserContext);
+  const { setToken, token, setArray, email } = useContext(UserContext);
   useEffect(() => {
     getIdToken();
   }, []);
@@ -16,9 +16,10 @@ export function Login() {
       const accessToken = session.getAccessToken().getJwtToken();
       const tokenPayload = JSON.parse(atob(jwtToken.split(".")[1]));
       console.log(tokenPayload);
+      console.log(tokenPayload.email);
       console.log("JWT Token:", jwtToken);
       console.log("Access Token:", accessToken);
-      testGet(jwtToken);
+      testGet(jwtToken, setArray, email);
       updateDB(jwtToken);
       setToken(jwtToken);
     } catch (error) {
@@ -38,8 +39,10 @@ export function Login() {
   );
 }
 
-function testGet(jwtToken) {
-  let url = "https://ujh4wq0bwd.execute-api.us-east-1.amazonaws.com/prod";
+function testGet(jwtToken, setArray, email) {
+  let url =
+    "https://ujh4wq0bwd.execute-api.us-east-1.amazonaws.com/prod?date=&uid=" +
+    email;
   fetch(url, {
     method: "GET",
     headers: {
@@ -60,6 +63,7 @@ function testGet(jwtToken) {
         myArray[i] = Number(myArray[i]);
       }
       console.log(myArray); // Process the response data
+      setArray(myArray);
     })
     .catch((error) => {
       console.error(`Fetch error: ${error}`);

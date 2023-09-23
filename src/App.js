@@ -1,6 +1,4 @@
 import React from "react";
-import { Authenticator } from "@aws-amplify/ui-react";
-import { Auth } from "aws-amplify";
 import { useState, createContext, useContext } from "react";
 import { useEffect } from "react";
 import ReactDOM from "react-dom";
@@ -12,6 +10,8 @@ import { useNavigate } from "react-router-dom";
 import { Similar } from "./Similar";
 import "@aws-amplify/ui-react/styles.css";
 import { Login } from "./Login";
+import { Authenticator } from "@aws-amplify/ui-react";
+import { Auth } from "aws-amplify";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 export const UserContext = createContext();
@@ -19,16 +19,69 @@ let posterSrc = "";
 
 let movieWatchList = [];
 //this is used for holdinhg list of all users selected movies
-export let array = [11];
-
+//export let array = [11];
+async function getIdToken(setToken, setEmail, setArray, email, token) {
+  try {
+    const session = await Auth.currentSession();
+    const jwtToken = session.getIdToken().getJwtToken();
+    const accessToken = session.getAccessToken().getJwtToken();
+    const tokenPayload = JSON.parse(atob(jwtToken.split(".")[1]));
+    console.log(tokenPayload);
+    console.log("JWT Token:", jwtToken);
+    console.log("Access Token:", accessToken);
+    setEmail(tokenPayload.email);
+    console.log(tokenPayload.email);
+    console.log(email);
+    setToken(jwtToken);
+    getList(jwtToken, setArray, tokenPayload.email);
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
 function App() {
   const [selectedMovie, SetSelectedMovie] = useState("");
   const [movieObj, SetmovieObj] = useState([]);
   const [token, setToken] = useState("1");
   const [array, setArray] = useState([]);
+  const [email, setEmail] = useState("");
   console.log(token);
+
+  useEffect(() => {
+    getIdToken(setToken, setEmail, setArray, email, token);
+  }, []);
+  function updateDB(jwtToken, myArray, email) {
+    const lambdaUrl =
+      "https://ujh4wq0bwd.execute-api.us-east-1.amazonaws.com/prod";
+    const bearerToken = jwtToken; // Replace with your bearer token
+
+    const id = email; // The ID value you want to update
+    const new_value = myArray.toString(); // The new value you want to set
+
+    fetch(lambdaUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${bearerToken}`, // Include the bearer token in the request header
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ID: id,
+        new_value: new_value,
+      }),
+    })
+      .then((response) => {
+        if (response.status === 200) {
+          console.log("Update successful");
+        } else {
+          console.error("Update failed");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
   return (
-    <UserContext.Provider value={{ setToken, token, array, setArray }}>
+    <UserContext.Provider
+      value={{ setToken, token, array, setArray, updateDB, email }}>
       <div className="App">
         <Navbar />
         <Routes>
@@ -91,7 +144,6 @@ function Movie(props) {
   }
 
   function ShowPoster(object) {
-    console.log("testing");
     posterSrc = "http://image.tmdb.org/t/p/w500/" + object.poster_path;
     setName(object.original_title);
     setPlot(object.overview);
@@ -165,6 +217,8 @@ export function MovieList(obj) {
   }
 
   function Checkbox(props) {
+    const { token, array, setArray, updateDB, email } = useContext(UserContext);
+    let tmpArray = array;
     const [check, setCheck] = useState(false);
     useEffect(() => {
       if (array.includes(props.movie.id)) {
@@ -175,20 +229,24 @@ export function MovieList(obj) {
       let movieId = Number(event.target.id);
       console.log(event.target.checked);
       if (event.target.checked) {
-        if (!array.includes(movieId)) {
-          array.push(movieId);
+        if (!tmpArray.includes(movieId)) {
+          tmpArray.push(movieId);
           console.log("✅ Added to list");
-          console.log(array);
+          console.log(tmpArray);
+          setArray(tmpArray);
           setCheck(true);
+          updateDB(token, tmpArray, email);
         }
       } else {
         console.log("⛔️ Removed from list");
-        const index = array.indexOf(movieId);
+        const index = tmpArray.indexOf(movieId);
         if (index > -1) {
           // only splice array when item is found
-          array.splice(index, 1); // 2nd parameter means remove one item only
-          console.log(array);
+          tmpArray.splice(index, 1); // 2nd parameter means remove one item only
+          console.log(tmpArray);
+          setArray(tmpArray);
           setCheck(false);
+          updateDB(token, tmpArray, email);
         }
       }
     };
@@ -234,10 +292,11 @@ function Demo2(props) {
 }
 function Watchlist(props) {
   const [lst, setLst] = useState([1]);
+  const { array, setArray } = useContext(UserContext);
   //this only runs once when Watchlist is made not on rerenders
   useEffect(() => {
     console.log("this should only log once");
-    getLst(setLst);
+    getLst(setLst, array);
   }, []);
 
   return (
@@ -250,8 +309,9 @@ function Watchlist(props) {
   );
 }
 
-async function getLst(setLst) {
+async function getLst(setLst, array) {
   const lst = array; //[78, 11791, 11801, 11826, 348350]; // would call api to get users watchlist here
+  console.log(lst);
   let movieLst = [];
   for (let i = 0; i < lst.length; i++) {
     const response = await fetch(
@@ -276,4 +336,37 @@ async function getLst(setLst) {
   setLst([2]);
 
   //setLst(["it should have chnaged by now"]);
+}
+
+function getList(jwtToken, setArray, email) {
+  console.log(email);
+  console.log("testing hereeeeeeeeeeeeee");
+  let url =
+    "https://ujh4wq0bwd.execute-api.us-east-1.amazonaws.com/prod?date=&uid=" +
+    email;
+  fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: jwtToken,
+      "Content-Type": "application/json",
+    },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json(); // Parse the response as JSON
+    })
+    .then((data) => {
+      //transform list into list of numbers
+      const myArray = data.body.split(",");
+      for (let i = 0; i < myArray.length; i++) {
+        myArray[i] = Number(myArray[i]);
+      }
+      console.log(myArray); // Process the response data
+      setArray(myArray);
+    })
+    .catch((error) => {
+      console.error(`Fetch error: ${error}`);
+    });
 }
