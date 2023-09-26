@@ -35,6 +35,10 @@ async function getIdToken(setToken, setEmail, setArray, email, token) {
     setToken(jwtToken);
     getList(jwtToken, setArray, tokenPayload.email);
   } catch (error) {
+    setEmail("");
+    setToken("");
+    setArray([]);
+    console.log("user data cleared");
     console.error("Error:", error);
   }
 }
@@ -44,11 +48,15 @@ function App() {
   const [token, setToken] = useState("1");
   const [array, setArray] = useState([]);
   const [email, setEmail] = useState("");
+  const [userState, setUserState] = useState(false);
   console.log(token);
 
   useEffect(() => {
     getIdToken(setToken, setEmail, setArray, email, token);
   }, []);
+  useEffect(() => {
+    getIdToken(setToken, setEmail, setArray, email, token);
+  }, [userState]);
   function updateDB(jwtToken, myArray, email) {
     const lambdaUrl =
       "https://ujh4wq0bwd.execute-api.us-east-1.amazonaws.com/prod";
@@ -81,7 +89,15 @@ function App() {
   }
   return (
     <UserContext.Provider
-      value={{ setToken, token, array, setArray, updateDB, email }}>
+      value={{
+        setToken,
+        token,
+        array,
+        setArray,
+        updateDB,
+        email,
+        setUserState,
+      }}>
       <div className="App">
         <Navbar />
         <Routes>

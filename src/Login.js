@@ -3,29 +3,41 @@ import { Authenticator } from "@aws-amplify/ui-react";
 import { Auth } from "aws-amplify";
 import { useState, createContext, useContext, useEffect } from "react";
 import { UserContext } from "./App.js";
+import { Hub, Logger } from "aws-amplify";
 
 export function Login() {
-  const { setToken, token, setArray, email } = useContext(UserContext);
+  const { setToken, token, setArray, email, setUserState } =
+    useContext(UserContext);
   useEffect(() => {
-    getIdToken();
+    //getIdToken();
+    const logger = new Logger("Logger", "INFO");
+    const listener = (data) => {
+      switch (data.payload.event) {
+        case "signIn":
+          logger.info("user signed in");
+          setUserState(true);
+          break;
+        case "signUp":
+          logger.info("user signed up");
+          setUserState(true);
+          break;
+        case "signOut":
+          logger.info("user signed out");
+          setUserState(false);
+          break;
+        case "signIn_failure":
+          logger.info("user sign in failed");
+          break;
+        case "configured":
+          logger.info("the Auth module is configured");
+          break;
+        default:
+          logger.error("Something went wrong, look at data object", data);
+      }
+    };
+
+    Hub.listen("auth", listener);
   }, []);
-  const getIdToken = async () => {
-    try {
-      const session = await Auth.currentSession();
-      const jwtToken = session.getIdToken().getJwtToken();
-      const accessToken = session.getAccessToken().getJwtToken();
-      const tokenPayload = JSON.parse(atob(jwtToken.split(".")[1]));
-      console.log(tokenPayload);
-      console.log(tokenPayload.email);
-      console.log("JWT Token:", jwtToken);
-      console.log("Access Token:", accessToken);
-      testGet(jwtToken, setArray, email);
-      updateDB(jwtToken);
-      setToken(jwtToken);
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
 
   return (
     <Authenticator>
